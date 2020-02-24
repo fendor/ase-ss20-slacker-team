@@ -5,14 +5,15 @@ let
     gmp
     zlib
     ncurses
+    lzma
 
     haskellPackages.cabal-install
     postgresql
   ];
 
   haskellShellHook = with pkgs; ''
-    export LD_LIBRARY_PATH=${gmp}/lib:${zlib}/lib:${ncurses}/lib
-    export PATH=$PATH:$HOME/.local/bin
+    export LD_LIBRARY_PATH=${lzma.out}/lib:${gmp}/lib:${zlib}/lib:${ncurses}/lib
+    
   '';
 
   postgresShellHook = ''
