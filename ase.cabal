@@ -1,0 +1,146 @@
+cabal-version:      2.4
+name:               ase
+
+-- The package version.  See the Haskell package versioning policy (PVP)
+-- for standards guiding when and how versions should be incremented.
+-- https://pvp.haskell.org
+-- PVP summary:      +-+------- breaking API changes
+--                   | | +----- non-breaking API additions
+--                   | | | +--- code changes with no API change
+version:            0.1.0.0
+
+-- A short (one-line) description of the package.
+-- synopsis:
+
+-- A longer description of the package.
+-- description:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+
+-- The license under which the package is released.
+license:            BSD-3-Clause
+
+-- The file containing the license text.
+license-file:       LICENSE
+
+-- The package author(s).
+author:             fendor
+
+-- An email address to which users can send suggestions, bug reports, and
+-- patches.
+maintainer:         power.walross@gmail.com
+
+-- A copyright notice.
+-- copyright:
+
+-- category:
+
+-- Extra files to be distributed with the package, such as examples or a
+-- README.
+extra-source-files: CHANGELOG.md
+
+common extensions
+  default-language:   Haskell2010
+  default-extensions:
+    BangPatterns
+    DataKinds
+    DataKinds
+    DeriveAnyClass
+    DeriveGeneric
+    DerivingStrategies
+    FlexibleContexts
+    FlexibleInstances
+    GADTs
+    GeneralizedNewtypeDeriving
+    InstanceSigs
+    LambdaCase
+    NamedFieldPuns
+    NumericUnderscores
+    OverloadedStrings
+    PatternGuards
+    PolyKinds
+    QuasiQuotes
+    RankNTypes
+    RecordWildCards
+    ScopedTypeVariables
+    TupleSections
+    TypeApplications
+    TypeFamilies
+    TypeOperators
+
+  other-extensions:   TemplateHaskell
+
+library
+  import:           extensions
+
+  -- Modules exported by the library.
+  exposed-modules:
+    MyLib
+    Postgres.Database
+    Servant.Api
+
+  -- Modules included in this library but not exported.
+  -- other-modules:
+
+  -- LANGUAGE extensions used by modules in this package.
+  -- other-extensions:
+
+  -- Other library packages from which modules are imported.
+  build-depends:
+    , base               ^>=4.12.0.0
+    , bytestring
+    , postgresql-simple
+    , servant
+    , text
+
+  -- Directories containing source files.
+  hs-source-dirs:   src
+
+  -- Base language which the package is written in.
+  default-language: Haskell2010
+
+executable ase
+  -- .hs or .lhs file containing the Main module.
+  main-is:          Main.hs
+
+  -- Modules included in this executable, other than Main.
+  -- other-modules:
+
+  -- LANGUAGE extensions used by modules in this package.
+  -- other-extensions:
+
+  -- Other library packages from which modules are imported.
+  build-depends:
+    , ase
+    , base  ^>=4.12.0.0
+
+  -- Directories containing source files.
+  hs-source-dirs:   app
+
+  -- Base language which the package is written in.
+  default-language: Haskell2010
+
+test-suite ase-test
+  import:           extensions
+
+  -- Base language which the package is written in.
+  default-language: Haskell2010
+
+  -- The interface type and version of the test suite.
+  type:             exitcode-stdio-1.0
+
+  -- The directory where the test specifications are found.
+  hs-source-dirs:   test
+
+  -- The entrypoint to the test suite.
+  main-is:          MyLibTest.hs
+  other-modules:    Postgres.DatabaseSpec
+
+  -- Test dependencies.
+  build-depends:
+    , ase
+    , base               ^>=4.12.0.0
+    , hspec
+    , postgresql-simple
+    , text

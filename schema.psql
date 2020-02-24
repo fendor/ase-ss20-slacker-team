@@ -1,0 +1,40 @@
+
+DROP TABLE IF EXISTS RACEENTRY;
+DROP TABLE IF EXISTS HORSE;
+DROP TABLE IF EXISTS JOCKEY;
+
+DROP SEQUENCE IF EXISTS horse_id_seq;
+DROP SEQUENCE IF EXISTS jockey_id_seq;
+DROP SEQUENCE IF EXISTS race_id_seq;
+DROP SEQUENCE IF EXISTS race_entry_seq;
+
+CREATE SEQUENCE horse_id_seq;
+CREATE SEQUENCE jockey_id_seq;
+CREATE SEQUENCE race_id_seq;
+CREATE SEQUENCE race_entry_seq;
+
+CREATE TABLE IF NOT EXISTS HORSE (
+    id bigint NOT NULL DEFAULT nextval('horse_id_seq') PRIMARY KEY ,
+    name text,
+    speed double precision,
+    image text,
+    deleted BOOLEAN DEFAULT FALSE
+);
+
+
+CREATE TABLE IF NOT EXISTS JOCKEY (
+    id bigint NOT NULL DEFAULT nextval('jockey_id_seq') PRIMARY KEY ,
+    name text,
+    skill double precision,
+    age smallint,
+    deleted BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE IF NOT EXISTS RACEENTRY (
+    id bigint NOT NULL DEFAULT nextval('race_id_seq') PRIMARY KEY ,
+    jockey bigint REFERENCES JOCKEY(id),
+    horse bigint REFERENCES HORSE(id),
+    race bigint,
+    UNIQUE (jockey, horse, race)
+);
+
