@@ -8,35 +8,12 @@ import           Data.Int                       ( Int64 )
 import           Database.PostgreSQL.Simple
 import           Database.PostgreSQL.Simple.FromRow
 import           Database.PostgreSQL.Simple.SqlQQ
+import Types
 
-data Horse = Horse
-    { horseName :: Text
-    , horseSpeed :: Double
-    , horseImage :: Text
-    , horseDeleted :: Bool
-    }
-    deriving (Show, Eq, Read, Generic, FromRow, ToRow)
-
-data Jockey = Jockey
-    { jockeyName :: Text
-    , jockeySkill :: Double
-    , jockeyAge :: Int
-    , jockeyDeleted :: Bool
-    }
-    deriving (Show, Eq, Read, Generic,  FromRow, ToRow)
-
-data RaceEntry = RaceEntry
-    { raceJockey :: Model Jockey
-    , raceHorse :: Model Horse
-    , raceId :: Int
-    }
-    deriving (Show, Eq, Read, Generic)
-
-data Model a = Model
-    { modelId :: Int
-    , model :: a
-    }
-    deriving (Show, Eq, Read, Generic)
+instance FromRow Jockey
+instance FromRow Horse
+instance ToRow Jockey
+instance ToRow Horse
 
 instance FromRow a => FromRow (Model a) where
     fromRow = Model <$> field <*> fromRow

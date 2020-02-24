@@ -1,4 +1,4 @@
-module Servant.Types where
+module Types where
 
 import Data.Text
 import Data.Aeson
@@ -12,7 +12,6 @@ data Horse = Horse
     , horseDeleted :: Bool
     }
     deriving (Show, Eq, Read, Generic, ToJSON, FromJSON)
-
 
 data Jockey = Jockey
     { jockeyName :: Text

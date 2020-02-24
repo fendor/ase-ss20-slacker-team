@@ -76,10 +76,9 @@ library
 
   -- Modules exported by the library.
   exposed-modules:
-    MyLib
     Postgres.Database
     Servant.Api
-    Servant.Types
+    Types
 
   -- Modules included in this library but not exported.
   -- other-modules:
