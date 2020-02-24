@@ -3,6 +3,7 @@ module Postgres.DatabaseSpec where
 import           Control.Monad
 import           Test.Hspec
 import           Postgres.Database
+import           Types
 import           Database.PostgreSQL.Simple
 
 withDefConnection :: (Connection -> IO a) -> IO a
@@ -67,7 +68,7 @@ main = hspec $ do
       nums `shouldBe` 1
 
     it "find race" $ withDefConnection $ \conn -> do
-      (_, rid) <- createNewRace conn [(jockey, horse)]
+      (_, rid)                 <- createNewRace conn [(jockey, horse)]
       [Model _ RaceEntry {..}] <- findRace conn rid
       model raceHorse `shouldBe` horse
       model raceJockey `shouldBe` jockey
@@ -81,7 +82,7 @@ createNewRace conn entries = do
       <$> (modelId `fmap` insertJockey conn j)
       <*> (modelId `fmap` insertHorse conn h)
 
-  rid <- newRace conn
+  rid      <- newRace conn
 
   modified <- createRace conn rid modelEntries
   return (modified, rid)
