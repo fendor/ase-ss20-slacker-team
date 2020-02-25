@@ -112,7 +112,6 @@ instance ToSchema a => ToSchema (Model a) where
                <> (modelSchema ^. schema . properties)
                )
 
-
 instance ToSchema Horse where
     declareNamedSchema _ = do
         textSchema   <- declareSchemaRef (Proxy :: Proxy T.Text)
@@ -123,7 +122,8 @@ instance ToSchema Horse where
             $  mempty
             &  type_
             ?~ SwaggerObject
-            -- &  description .~ Just "Test"
+            &  description
+            ?~ "Horse Entity"
             &  properties
             .~ fromList
                    [ ("name"   , textSchema)
@@ -131,7 +131,6 @@ instance ToSchema Horse where
                    , ("image"  , textSchema)
                    , ("deleted", boolSchema)
                    ]
-
 
 instance ToSchema Jockey where
     declareNamedSchema _ = do
@@ -144,6 +143,8 @@ instance ToSchema Jockey where
             $  mempty
             &  type_
             ?~ SwaggerObject
+            & description 
+            ?~ "Jockey Entity"
             &  properties
             .~ fromList
                    [ ("name"   , textSchema)

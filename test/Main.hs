@@ -12,5 +12,4 @@ import qualified Postgres.DatabaseSpec         as P
 main :: IO ()
 main = hspec $ do
   describe "database-tests" P.databaseSpec
-  describe "swagger-ui" $ do
-    validateEveryToJSON (Proxy :: Proxy AseApi)
+  describe "swagger-ui" $ validateEveryToJSON (Proxy :: Proxy AseApi)
