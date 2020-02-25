@@ -21,27 +21,108 @@ instance FromRow a => FromRow (Model a) where
 instance FromRow RaceEntry where
     fromRow = RaceEntry <$> fromRow <*> fromRow <*> field
 
-insertHorse :: Connection -> Horse -> IO (Model Horse)
-insertHorse conn Horse {..} = do
+
+class Crud a where
+  type DbKey a
+  type DbConn a
+  insert :: DbConn a -> a -> IO (Model a)
+  findOne :: DbConn a -> DbKey a -> IO (Maybe (Model a))
+  findAll :: DbConn a -> IO [Model a]
+  update :: DbConn a -> Model a -> IO ()
+  delete :: DbConn a -> DbKey a -> IO a
+
+instance Crud Horse where
+  type DbKey Horse = Int
+  type DbConn Horse = Connection
+  insert conn Horse {..} = do
     [Only hid] <- returning
-        conn
-        [sql|INSERT INTO HORSE (name, speed, image)
-             VALUES (?, ?, ?)
-             RETURNING id
-        |]
-        [(horseName, horseSpeed, horseImage)]
+      conn
+      [sql|INSERT INTO HORSE (name, speed, image)
+            VALUES (?, ?, ?)
+            RETURNING id
+      |]
+      [(horseName, horseSpeed, horseImage)]
     return (Model hid Horse { .. })
 
-insertJockey :: Connection -> Jockey -> IO (Model Jockey)
-insertJockey conn Jockey {..} = do
+
+  findOne conn hid = do
+    res <- query
+      conn
+      "SELECT id, name, speed, image, deleted FROM HORSE WHERE id = ?"
+      (Only hid)
+    return (listToMaybe res)
+
+  findAll conn = query_ conn "SELECT id, name, speed, image, deleted FROM HORSE WHERE deleted = FALSE"
+
+  update conn (Model hid Horse {..}) = do
+    _ <- execute
+      conn
+      "UPDATE Horse SET (name, speed, image) = (?, ?, ?) WHERE id = ?"
+      (horseName, horseSpeed, horseImage, hid)
+    return ()
+
+  delete conn hid = do
+      _ <- execute
+          conn
+          "UPDATE Horse SET deleted = True WHERE id = ?"
+          (Only hid)
+      return undefined
+
+instance Crud Jockey where
+  type DbKey Jockey = Int
+  type DbConn Jockey = Connection
+  insert conn Jockey {..} = do
     [Only jid] <- returning
-        conn
-        [sql|INSERT INTO JOCKEY (name, skill, age)
-             VALUES (?, ?, ?)
-             RETURNING id
-        |]
-        [(jockeyName, jockeySkill, jockeyAge)]
+      conn
+      [sql|INSERT INTO JOCKEY (name, skill, age)
+            VALUES (?, ?, ?)
+            RETURNING id
+      |]
+      [(jockeyName, jockeySkill, jockeyAge)]
     return (Model jid Jockey { .. })
+
+  findOne conn hid = do
+    res <- query
+      conn
+      [sql|SELECT id, name, skill, age, deleted FROM JOCKEY WHERE id = ?
+      |]
+      (Only hid)
+    return (listToMaybe res)
+
+  findAll conn = query_ conn "SELECT id, name, skill, age, deleted FROM JOCKEY WHERE deleted = FALSE"
+
+
+  update conn (Model jid Jockey {..}) = do
+    _ <- execute
+      conn
+      "UPDATE JOCKEY SET (name, skill, age) = (?, ?, ?) WHERE id = ?"
+      (jockeyName, jockeySkill, jockeyAge, jid)
+    return ()
+
+  delete conn jid = do
+    _ <- execute
+        conn
+        "UPDATE Jockey SET deleted = True WHERE id = ?"
+        (Only jid)
+    return undefined
+
+
+findRace :: Connection -> Int -> IO [Model RaceEntry]
+findRace conn rid = query
+    conn
+    [sql|
+        SELECT r.id, j.id, j.name, j.skill, j.age, j.deleted, h.id, h.name, h.speed, h.image, h.deleted, r.race
+        FROM RACEENTRY r
+        JOIN JOCKEY j ON r.jockey = j.id JOIN HORSE h on h.id = r.horse
+        WHERE r.race = ?
+    |]
+    (Only rid)
+
+newRace :: Connection -> IO Int
+newRace conn = do
+    [Only rid] <- query_ conn "SELECT nextval('race_entry_seq')"
+    return rid
+
 
 insertRaceEntry :: Connection -> RaceEntry -> IO (Model RaceEntry)
 insertRaceEntry conn RaceEntry {..} = do
@@ -65,52 +146,3 @@ createRace conn rid entries = do
         |]
         (map packTuple entries)
     return $ fromIntegral nums
-
-findHorse :: Connection -> Int -> IO (Maybe (Model Horse))
-findHorse conn hid = do
-    res <- query
-        conn
-        "SELECT id, name, speed, image, deleted FROM HORSE WHERE id = ?"
-        (Only hid)
-    return (listToMaybe res)
-
-findJockey :: Connection -> Int -> IO (Maybe (Model Jockey))
-findJockey conn hid = do
-    res <- query
-        conn
-        [sql| SELECT id, name, skill, age, deleted FROM JOCKEY WHERE id = ?
-        |]
-        (Only hid)
-    return (listToMaybe res)
-
-findRace :: Connection -> Int -> IO [Model RaceEntry]
-findRace conn rid = query
-    conn
-    [sql|
-        SELECT r.id, j.id, j.name, j.skill, j.age, j.deleted, h.id, h.name, h.speed, h.image, h.deleted, r.race
-        FROM RACEENTRY r
-        JOIN JOCKEY j ON r.jockey = j.id JOIN HORSE h on h.id = r.horse
-        WHERE r.race = ?
-    |]
-    (Only rid)
-
-updateHorse :: Connection -> Model Horse -> IO ()
-updateHorse conn (Model hid Horse {..}) = do
-    _ <- execute
-        conn
-        "UPDATE Horse SET (name, speed, image) = (?, ?, ?) WHERE id = ?"
-        (horseName, horseSpeed, horseImage, hid)
-    return ()
-
-updateJockey :: Connection -> Model Jockey -> IO ()
-updateJockey conn (Model jid Jockey {..}) = do
-    _ <- execute
-        conn
-        "UPDATE JOCKEY SET (name, skill, age) = (?, ?, ?) WHERE id = ?"
-        (jockeyName, jockeySkill, jockeyAge, jid)
-    return ()
-
-newRace :: Connection -> IO Int
-newRace conn = do
-    [Only rid] <- query_ conn "SELECT nextval('race_entry_seq')"
-    return rid
