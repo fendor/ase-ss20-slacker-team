@@ -4,8 +4,9 @@ import           Servant
 import           Servant.Swagger.UI
 import           Servant.Swagger
 import           Types
+import           Polysemy
 import           Database.PostgreSQL.Simple
-import qualified Postgres.Simple as Db
+import qualified Postgres.Simple               as Db
 import           Control.Monad.IO.Class         ( liftIO )
 import           Control.Lens.Operators
 import           Data.Swagger.Lens
@@ -33,7 +34,7 @@ type RaceApi =
 
 horseApi :: Connection -> Server HorseApi
 horseApi conn =
-  findAll
+       findAll
   :<|> create
   :<|> update
   :<|> delete
@@ -58,7 +59,7 @@ horseApi conn =
 
 jockeyApi :: Connection -> Server JockeyApi
 jockeyApi conn =
-  findAll
+       findAll
   :<|> create
   :<|> update
   :<|> delete

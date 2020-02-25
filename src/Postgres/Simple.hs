@@ -4,6 +4,92 @@ import           Data.Maybe
 import           Database.PostgreSQL.Simple
 import           Database.PostgreSQL.Simple.SqlQQ
 import           Types
+import           Polysemy
+import           Polysemy.Reader
+import           Polysemy.Fail
+import           Postgres.Polysemy              ( DbCrud(..) )
+
+runSchema
+  :: Members '[Fail, Reader Connection, Embed IO] r
+  => Sem (DbCrud Horse : DbCrud Jockey : r) a
+  -> Sem r a
+runSchema = runPostgresJockey . runPostgresHorse
+
+runPostgresHorse
+  :: Members '[Fail, Reader Connection, Embed IO] r
+  => Sem (DbCrud Horse : r) a
+  -> Sem r a
+runPostgresHorse = interpret $ \x -> do
+  conn :: Connection <- ask
+  case x of
+    Insert Horse {..} -> do
+      [Only hid] <- embed $ returning
+        conn
+        [sql|INSERT INTO HORSE (name, speed, image)
+              VALUES (?, ?, ?)
+              RETURNING id
+        |]
+        [(horseName, horseSpeed, horseImage)]
+      return (Model hid Horse { .. })
+    FindOne hid -> do
+      res <- embed $ query
+        conn
+        "SELECT id, name, speed, image, deleted FROM HORSE WHERE id = ?"
+        (Only hid)
+      return (listToMaybe res)
+    FindAll -> embed $ query_
+      conn
+      "SELECT id, name, speed, image, deleted FROM HORSE WHERE deleted = FALSE"
+
+    Update (Model hid Horse {..}) -> do
+      _ <- embed $ execute
+        conn
+        "UPDATE Horse SET (name, speed, image) = (?, ?, ?) WHERE id = ?"
+        (horseName, horseSpeed, horseImage, hid)
+      return ()
+    Delete hid -> do
+      _ <- embed
+        $ execute conn "UPDATE Horse SET deleted = True WHERE id = ?" (Only hid)
+      return ()
+
+runPostgresJockey
+  :: Members '[Fail, Reader Connection, Embed IO] r
+  => Sem (DbCrud Jockey : r) a
+  -> Sem r a
+runPostgresJockey = interpret $ \x -> do
+  conn :: Connection <- ask
+  case x of
+    Insert Jockey {..} -> do
+      [Only jid] <- embed $ returning
+        conn
+        [sql|INSERT INTO JOCKEY (name, skill, age)
+              VALUES (?, ?, ?)
+              RETURNING id
+        |]
+        [(jockeyName, jockeySkill, jockeyAge)]
+      return (Model jid Jockey { .. })
+    FindOne hid -> do
+      res <- embed $ query
+        conn
+        [sql|SELECT id, name, skill, age, deleted FROM JOCKEY WHERE id = ?
+        |]
+        (Only hid)
+      return (listToMaybe res)
+    FindAll -> embed $ query_
+      conn
+      "SELECT id, name, skill, age, deleted FROM JOCKEY WHERE deleted = FALSE"
+
+    Update (Model jid Jockey {..}) -> do
+      _ <- embed $ execute
+        conn
+        "UPDATE JOCKEY SET (name, skill, age) = (?, ?, ?) WHERE id = ?"
+        (jockeyName, jockeySkill, jockeyAge, jid)
+      return ()
+    Delete jid -> do
+      _ <- embed $ execute conn
+                           "UPDATE Jockey SET deleted = True WHERE id = ?"
+                           (Only jid)
+      return ()
 
 class Crud a where
   type DbKey a

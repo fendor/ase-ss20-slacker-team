@@ -6,7 +6,7 @@ where
 import           Test.Hspec
 import           Servant.Swagger
 import           Data.Proxy
-import           Servant.Api
+import           Api
 import qualified Postgres.DatabaseSpec         as P
 
 main :: IO ()

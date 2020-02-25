@@ -46,24 +46,26 @@ common core
     , aeson-pretty
     , base                       ^>=4.12.0.0
     , bytestring
-    , insert-ordered-containers
-    , lens
-    , postgresql-simple
+    , generic-random
     , groundhog
     , groundhog-postgresql
-    , unliftio
+    , insert-ordered-containers
+    , lens
+    , polysemy
+    , polysemy-plugin
+    , postgresql-simple
+    , QuickCheck
+    , quickcheck-instances
     , servant-server
     , servant-swagger
     , servant-swagger-ui
     , swagger2
     , text
+    , unliftio
     , wai-logger
     , warp
-    , QuickCheck
-    , quickcheck-instances
-    , generic-random
 
-  ghc-options:        -Wall
+  ghc-options:        -Wall -fplugin=Polysemy.Plugin
   default-language:   Haskell2010
   default-extensions:
     BangPatterns
@@ -99,10 +101,11 @@ library
 
   -- Modules exported by the library.
   exposed-modules:
-    AseMain
-    Postgres.Simple
-    Postgres.Groundhog
     Api
+    AseMain
+    Postgres.Groundhog
+    Postgres.Polysemy
+    Postgres.Simple
     Types
 
   -- Modules included in this library but not exported.
