@@ -2,7 +2,7 @@ module Postgres.DatabaseSpec where
 
 import           Control.Monad
 import           Test.Hspec
-import           Postgres.Database
+import           Postgres.Simple
 import           Types
 import           Database.PostgreSQL.Simple
 

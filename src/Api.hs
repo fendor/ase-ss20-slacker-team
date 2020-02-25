@@ -1,11 +1,11 @@
-module Servant.Api where
+module Api where
 
 import           Servant
 import           Servant.Swagger.UI
 import           Servant.Swagger
 import           Types
 import           Database.PostgreSQL.Simple
-import qualified Postgres.Database as Db
+import qualified Postgres.Simple as Db
 import           Control.Monad.IO.Class         ( liftIO )
 import           Control.Lens.Operators
 import           Data.Swagger.Lens

@@ -49,6 +49,9 @@ common core
     , insert-ordered-containers
     , lens
     , postgresql-simple
+    , groundhog
+    , groundhog-postgresql
+    , unliftio
     , servant-server
     , servant-swagger
     , servant-swagger-ui
@@ -96,9 +99,10 @@ library
 
   -- Modules exported by the library.
   exposed-modules:
-    Ase.Main
-    Postgres.Database
-    Servant.Api
+    AseMain
+    Postgres.Simple
+    Postgres.Groundhog
+    Api
     Types
 
   -- Modules included in this library but not exported.

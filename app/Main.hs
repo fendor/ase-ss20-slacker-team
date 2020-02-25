@@ -1,6 +1,6 @@
 module Main where
 
-import qualified Ase.Main as Ase
+import qualified AseMain as Ase
 
 main :: IO ()
 main = Ase.main

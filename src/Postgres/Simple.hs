@@ -1,4 +1,4 @@
-module Postgres.Database where
+module Postgres.Simple where
 
 import           Data.Maybe
 import           Database.PostgreSQL.Simple
