@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Postgres.Polysemy where
 
-import           Types
+import           Utils
 import           Polysemy
 
 data DbCrud r m a where

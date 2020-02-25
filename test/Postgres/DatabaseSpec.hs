@@ -3,7 +3,10 @@ module Postgres.DatabaseSpec where
 import           Control.Monad
 import           Test.Hspec
 import           Postgres.Simple
-import           Types
+import           Utils
+import           Horse
+import           Jockey
+import           Race
 import           Database.PostgreSQL.Simple
 
 withDefConnection :: (Connection -> IO a) -> IO a
@@ -36,8 +39,8 @@ databaseSpec = do
       findOne conn (modelId dbHorse) `shouldReturn` Just newHorse
 
     it "delete" $ withDefConnection $ \conn -> do
-      Model hid _ <- insert conn horse
-      (_ :: Horse) <- delete conn hid
+      Model hid       _         <- insert conn horse
+      (     _ :: Horse)         <- delete conn hid
       Just (Model _ Horse {..}) <- findOne conn hid
       horseDeleted `shouldBe` True
 
@@ -57,8 +60,8 @@ databaseSpec = do
       findOne conn (modelId dbJockey) `shouldReturn` Just newJockey
 
     it "delete" $ withDefConnection $ \conn -> do
-      Model hid _ <- insert conn jockey
-      (_ :: Jockey) <- delete conn hid
+      Model hid        _         <- insert conn jockey
+      (     _ :: Jockey)         <- delete conn hid
       Just (Model _ Jockey {..}) <- findOne conn hid
       jockeyDeleted `shouldBe` True
 
@@ -90,9 +93,7 @@ databaseSpec = do
 createNewRace :: Connection -> [(Jockey, Horse)] -> IO (Int, Int)
 createNewRace conn entries = do
   modelEntries <- forM entries $ \(j, h) ->
-    (,)
-      <$> (modelId `fmap` insert conn j)
-      <*> (modelId `fmap` insert conn h)
+    (,) <$> (modelId `fmap` insert conn j) <*> (modelId `fmap` insert conn h)
 
   rid      <- newRace conn
 

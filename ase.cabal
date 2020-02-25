@@ -106,7 +106,10 @@ library
     Postgres.Groundhog
     Postgres.Polysemy
     Postgres.Simple
-    Types
+    Horse
+    Jockey
+    Race
+    Utils
 
   -- Modules included in this library but not exported.
   -- other-modules:
