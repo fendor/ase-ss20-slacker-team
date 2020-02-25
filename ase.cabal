@@ -40,7 +40,27 @@ maintainer:         power.walross@gmail.com
 -- README.
 extra-source-files: CHANGELOG.md
 
-common extensions
+common core
+  build-depends:
+    , aeson
+    , aeson-pretty
+    , base                       ^>=4.12.0.0
+    , bytestring
+    , insert-ordered-containers
+    , lens
+    , postgresql-simple
+    , servant-server
+    , servant-swagger
+    , servant-swagger-ui
+    , swagger2
+    , text
+    , wai-logger
+    , warp
+    , QuickCheck
+    , quickcheck-instances
+    , generic-random
+
+  ghc-options:        -Wall
   default-language:   Haskell2010
   default-extensions:
     BangPatterns
@@ -72,7 +92,7 @@ common extensions
   other-extensions:   TemplateHaskell
 
 library
-  import:           extensions
+  import:           core
 
   -- Modules exported by the library.
   exposed-modules:
@@ -84,29 +104,16 @@ library
   -- Modules included in this library but not exported.
   -- other-modules:
 
-  -- LANGUAGE extensions used by modules in this package.
-  -- other-extensions:
-
-  -- Other library packages from which modules are imported.
-  build-depends:
-    , aeson
-    , aeson-pretty
-    , base               ^>=4.12.0.0
-    , bytestring
-    , postgresql-simple
-    , servant-server
-    , servant-swagger
-    , servant-swagger-ui
-    , text
-    , warp
-
   -- Directories containing source files.
   hs-source-dirs:   src
+  ghc-options:      -Wall
 
   -- Base language which the package is written in.
   default-language: Haskell2010
 
 executable ase
+  import:           core
+
   -- .hs or .lhs file containing the Main module.
   main-is:          Main.hs
 
@@ -117,18 +124,17 @@ executable ase
   -- other-extensions:
 
   -- Other library packages from which modules are imported.
-  build-depends:
-    , ase
-    , base  ^>=4.12.0.0
+  build-depends:    ase
 
   -- Directories containing source files.
   hs-source-dirs:   app
 
   -- Base language which the package is written in.
   default-language: Haskell2010
+  ghc-options:      -threaded
 
 test-suite ase-test
-  import:           extensions
+  import:           core
 
   -- Base language which the package is written in.
   default-language: Haskell2010
@@ -140,13 +146,11 @@ test-suite ase-test
   hs-source-dirs:   test
 
   -- The entrypoint to the test suite.
-  main-is:          MyLibTest.hs
+  main-is:          Main.hs
   other-modules:    Postgres.DatabaseSpec
 
   -- Test dependencies.
   build-depends:
     , ase
-    , base               ^>=4.12.0.0
+    , base   ^>=4.12.0.0
     , hspec
-    , postgresql-simple
-    , text

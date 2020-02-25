@@ -1,11 +1,15 @@
 module Ase.Main where
 
-import Servant
-import Network.Wai.Handler.Warp
-import Servant.Api
-import Database.PostgreSQL.Simple
+import           Network.Wai.Handler.Warp
+import           Network.Wai.Logger             ( withStdoutLogger )
+import           Servant.Api
+import           Database.PostgreSQL.Simple
+import           Data.Function
 
 main :: IO ()
 main = do
   conn <- connect defaultConnectInfo { connectUser = "baldr" }
-  run 8081 (aseApp conn)
+  withStdoutLogger $ \logger -> do
+    let settings = defaultSettings & setPort 8081 & setLogger logger
+    putStrLn "Server starting on port 8081..."
+    runSettings settings (aseApp conn)

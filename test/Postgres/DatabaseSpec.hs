@@ -17,8 +17,8 @@ jockey = Jockey "Jack" 1.1 21 False
 horse :: Horse
 horse = Horse "Kato" 12.5 "no-image" False
 
-main :: IO ()
-main = hspec $ do
+databaseSpec :: Spec
+databaseSpec = do
   describe "horse" $ do
     it "insert" $ do
       res <- withDefConnection (`insert` horse)
