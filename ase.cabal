@@ -105,7 +105,6 @@ library
     AseMain
     Postgres.Groundhog
     Postgres.Polysemy
-    Postgres.Simple
     Horse
     Jockey
     Race

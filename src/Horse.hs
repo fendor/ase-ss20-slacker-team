@@ -10,6 +10,7 @@ import           Data.Proxy
 import           Polysemy
 import           Polysemy.Reader
 import           Polysemy.Fail
+import           Polysemy.Error
 import           Database.PostgreSQL.Simple
 import           Database.PostgreSQL.Simple.SqlQQ
 import           Control.Lens.Operators  hiding ( (.=) )
@@ -19,12 +20,10 @@ import           Test.QuickCheck.Arbitrary
 import           Test.QuickCheck.Instances.Text ( )
 import           Generic.Random
 import           Type.Reflection
-import           Postgres.Simple               as Db
 import           Utils
 import           Postgres.Polysemy              ( DbCrud(..) )
+import qualified Postgres.Polysemy as P
 import           Servant
-import           Control.Monad.IO.Class         ( liftIO )
-
 
 data Horse = Horse
     { horseName :: T.Text
@@ -42,23 +41,19 @@ type HorseApi = "horse"  :>
   :<|> Summary "Find entity by id" :> Capture "horseId" Int :> Get '[JSON] (Model Horse)
   )
 
-horseApi :: Connection -> Server HorseApi
-horseApi conn = findAll' :<|> create' :<|> update' :<|> delete' :<|> findOne'
+horseApi :: Members '[DbCrud Horse, Error T.Text] r => ServerT HorseApi (Sem r)
+horseApi =
+  P.findAll :<|> P.insert :<|> update' :<|> P.delete @Horse :<|> findOne'
  where
-  findAll' :: Handler [Model Horse]
-  findAll' = liftIO $ Db.findAll conn
-  create' :: Horse -> Handler (Model Horse)
-  create' horse = liftIO $ Db.insert conn horse
-  update' :: Int -> Horse -> Handler ()
-  update' hid horse = liftIO $ Db.update conn (Model hid horse)
-  delete' :: Int -> Handler ()
-  delete' hid = do
-    (_ :: Horse) <- liftIO $ Db.delete conn hid
-    return ()
-  findOne' :: Int -> Handler (Model Horse)
-  findOne' hid = liftIO (Db.findOne conn hid) >>= \case
-    Nothing -> throwError err404
-    Just h  -> return h
+  update' :: Member (DbCrud Horse) r => Int -> Horse -> Sem r ()
+  update' hid horse = P.update (Model hid horse)
+
+  findOne'
+    :: Members '[Error T.Text, DbCrud Horse] r => Int -> Sem r (Model Horse)
+  findOne' hid = do
+    P.findOne hid >>= \case
+      Nothing -> throw @T.Text ""
+      Just h  -> return h
 
 instance FromJSON Horse where
   parseJSON = Aeson.genericParseJSON prefixOptions
@@ -92,42 +87,6 @@ instance ToSchema Horse where
 
 instance Arbitrary Horse where
   arbitrary = genericArbitrary uniform
-
-
-instance Crud Horse where
-  type DbKey Horse = Int
-  type DbConn Horse = Connection
-  insert conn Horse {..} = do
-    [Only hid] <- returning
-      conn
-      [sql|INSERT INTO HORSE (name, speed, image)
-            VALUES (?, ?, ?)
-            RETURNING id
-        |]
-      [(horseName, horseSpeed, horseImage)]
-    return (Model hid Horse { .. })
-
-  findOne conn hid = do
-    res <- query
-      conn
-      "SELECT id, name, speed, image, deleted FROM HORSE WHERE id = ?"
-      (Only hid)
-    return (listToMaybe res)
-
-  findAll conn = query_
-    conn
-    "SELECT id, name, speed, image, deleted FROM HORSE WHERE deleted = FALSE"
-
-  update conn (Model hid Horse {..}) = do
-    _ <- execute
-      conn
-      "UPDATE Horse SET (name, speed, image) = (?, ?, ?) WHERE id = ?"
-      (horseName, horseSpeed, horseImage, hid)
-    return ()
-
-  delete conn hid = do
-    _ <- execute conn "UPDATE Horse SET deleted = True WHERE id = ?" (Only hid)
-    return undefined
 
 runPostgresHorse
   :: Members '[Fail, Reader Connection, Embed IO] r

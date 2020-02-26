@@ -8,8 +8,9 @@ import           Data.Swagger.Schema
 import           Data.Swagger
 import           Data.Proxy
 import           Polysemy
-import           Polysemy.Reader
 import           Polysemy.Fail
+import           Polysemy.Reader
+import           Polysemy.Error
 import           Database.PostgreSQL.Simple
 import           Database.PostgreSQL.Simple.SqlQQ
 import           Control.Lens.Operators  hiding ( (.=) )
@@ -20,10 +21,9 @@ import           Test.QuickCheck.Instances.Text ( )
 import           Generic.Random
 import           Type.Reflection
 import           Utils
-import           Postgres.Simple as Db
-import           Postgres.Polysemy (DbCrud(..))
+import           Postgres.Polysemy              ( DbCrud(..) )
+import qualified Postgres.Polysemy             as P
 import           Servant
-import           Control.Monad.IO.Class         ( liftIO )
 
 data Jockey = Jockey
     { jockeyName :: T.Text
@@ -41,31 +41,19 @@ type JockeyApi = "jockey" :>
   :<|> Summary "Find entity by id"  :> Capture "jockeyId" Int :> Get '[JSON] (Model Jockey)
   )
 
-jockeyApi :: Connection -> Server JockeyApi
-jockeyApi conn =
-       findAll'
-  :<|> create'
-  :<|> update'
-  :<|> delete'
-  :<|> findOne'
-  where
-    findAll' :: Handler [Model Jockey]
-    findAll' = liftIO $ Db.findAll conn
-    create' :: Jockey -> Handler (Model Jockey)
-    create' jockey = liftIO $ Db.insert conn jockey
-    update' :: Int -> Jockey -> Handler ()
-    update'  hid jockey = liftIO $ Db.update conn (Model hid jockey)
-    delete' :: Int -> Handler ()
-    delete' hid = do
-      (_ :: Jockey)  <- liftIO $ Db.delete conn hid
-      return ()
+jockeyApi
+  :: Members '[DbCrud Jockey, Error T.Text] r => ServerT JockeyApi (Sem r)
+jockeyApi =
+  P.findAll :<|> P.insert :<|> update' :<|> P.delete @Jockey :<|> findOne'
+ where
+  update' :: Member (DbCrud Jockey) r => Int -> Jockey -> Sem r ()
+  update' hid jockey = P.update (Model hid jockey)
 
-    findOne' :: Int -> Handler (Model Jockey)
-    findOne' hid =
-      liftIO (Db.findOne conn hid)
-        >>= \case
-          Nothing -> throwError err404
-          Just h -> return h
+  findOne'
+    :: Members '[DbCrud Jockey, Error T.Text] r => Int -> Sem r (Model Jockey)
+  findOne' hid = P.findOne hid >>= \case
+    Nothing -> throw @T.Text ""
+    Just h  -> return h
 
 instance FromRow Jockey
 instance ToRow Jockey
@@ -100,42 +88,6 @@ instance ToSchema Jockey where
            , ("age"    , intSchema)
            , ("deleted", boolSchema)
            ]
-
-instance Crud Jockey where
-  type DbKey Jockey = Int
-  type DbConn Jockey = Connection
-  insert conn Jockey {..} = do
-    [Only jid] <- returning
-      conn
-      [sql|INSERT INTO JOCKEY (name, skill, age)
-            VALUES (?, ?, ?)
-            RETURNING id
-      |]
-      [(jockeyName, jockeySkill, jockeyAge)]
-    return (Model jid Jockey { .. })
-
-  findOne conn hid = do
-    res <- query
-      conn
-      [sql|SELECT id, name, skill, age, deleted FROM JOCKEY WHERE id = ?|]
-      (Only hid)
-    return (listToMaybe res)
-
-  findAll conn = query_
-    conn
-    "SELECT id, name, skill, age, deleted FROM JOCKEY WHERE deleted = FALSE"
-
-
-  update conn (Model jid Jockey {..}) = do
-    _ <- execute
-      conn
-      "UPDATE JOCKEY SET (name, skill, age) = (?, ?, ?) WHERE id = ?"
-      (jockeyName, jockeySkill, jockeyAge, jid)
-    return ()
-
-  delete conn jid = do
-    _ <- execute conn "UPDATE Jockey SET deleted = True WHERE id = ?" (Only jid)
-    return undefined
 
 runPostgresJockey
   :: Members '[Fail, Reader Connection, Embed IO] r

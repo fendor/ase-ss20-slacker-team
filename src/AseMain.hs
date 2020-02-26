@@ -3,8 +3,8 @@ module AseMain where
 import           Network.Wai.Handler.Warp
 import           Network.Wai.Logger             ( withStdoutLogger )
 import           Api
-import           Database.PostgreSQL.Simple
 import           Data.Function
+import           Database.PostgreSQL.Simple
 import           UnliftIO.Exception
 
 main :: IO ()

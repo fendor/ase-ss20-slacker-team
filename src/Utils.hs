@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 module Utils where
 
 import           Data.Aeson
@@ -14,6 +15,8 @@ import           Test.QuickCheck.Arbitrary
 import           Test.QuickCheck.Instances.Text ( )
 import           Generic.Random
 import           Type.Reflection
+
+
 
 data Model a = Model
     { modelId :: Int

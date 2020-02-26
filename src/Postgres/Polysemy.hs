@@ -4,6 +4,8 @@ module Postgres.Polysemy where
 import           Utils
 import           Polysemy
 
+
+
 data DbCrud r m a where
   Insert ::r -> DbCrud r m (Model r)
   FindOne ::Int -> DbCrud r m (Maybe (Model r))
